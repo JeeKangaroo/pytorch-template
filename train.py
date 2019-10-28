@@ -1,6 +1,7 @@
 import argparse
 import collections
 import torch
+import wandb
 import numpy as np
 import data_loader.data_loaders as module_data
 import model.loss as module_loss
@@ -8,7 +9,7 @@ import model.metric as module_metric
 import model.model as module_arch
 from parse_config import ConfigParser
 from trainer import Trainer
-
+from utils import to_dict, flatten
 
 # fix random seeds for reproducibility
 SEED = 123
@@ -17,7 +18,14 @@ torch.backends.cudnn.deterministic = True
 torch.backends.cudnn.benchmark = False
 np.random.seed(SEED)
 
+
 def main(config):
+
+    if not config['debug']:
+        # Send Config to WandB
+        wandb.init(config=flatten(to_dict(config.config)), project=config['wandb'])
+
+    # Logger
     logger = config.get_logger('train')
 
     # setup data_loader instances
@@ -38,6 +46,11 @@ def main(config):
 
     lr_scheduler = config.init_obj('lr_scheduler', torch.optim.lr_scheduler, optimizer)
 
+    if not config['debug']:
+        # Send model to WandB
+        wandb.watch(model)
+
+    # Trainer
     trainer = Trainer(model, criterion, metrics, optimizer,
                       config=config,
                       data_loader=data_loader,
