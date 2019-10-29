@@ -26,6 +26,7 @@ class Trainer(BaseTrainer):
         self.lr_scheduler = lr_scheduler
         self.log_step = int(np.sqrt(data_loader.batch_size))
         self.init_lr = config['optimizer']['args']['lr']
+        self.warm_up = config['trainer']['warm_up']
 
         self.train_metrics = MetricTracker('loss', *[m.__name__ for m in self.metric_ftns])
         self.valid_metrics = MetricTracker('loss', *[m.__name__ for m in self.metric_ftns])
@@ -43,11 +44,10 @@ class Trainer(BaseTrainer):
             data, target = data.to(self.device), target.to(self.device)
 
             # Linear Learning Rate Warm-up
-            warm_up = 5
             full_batch_idx = ((epoch-1)*len(self.data_loader) + batch_idx)
-            if epoch - 1 < warm_up:
+            if epoch - 1 < self.warm_up:
                 for params in self.optimizer.param_groups:
-                    params['lr'] = self.init_lr/(warm_up*len(self.data_loader)) * full_batch_idx
+                    params['lr'] = self.init_lr/(self.warm_up * len(self.data_loader)) * full_batch_idx
             lr = get_lr(self.optimizer)
 
             # -------- TRAINING LOOP --------
