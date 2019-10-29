@@ -21,9 +21,14 @@ np.random.seed(SEED)
 
 def main(config):
 
+    # WandB Resume Handling
+    resume = False
+    if config.resume is not None:
+        resume = True
+
     if not config['debug']:
         # Send Config to WandB
-        wandb.init(config=flatten(to_dict(config.config)), project=config['wandb'])
+        wandb.init(config=flatten(to_dict(config.config)), **flatten(config['wandb']), resume=resume)
 
     # Logger
     logger = config.get_logger('train')
@@ -73,7 +78,7 @@ if __name__ == '__main__':
     CustomArgs = collections.namedtuple('CustomArgs', 'flags type target')
     options = [
         CustomArgs(['--lr', '--learning_rate'], type=float, target='optimizer;args;lr'),
-        CustomArgs(['--bs', '--batch_size'], type=int, target='data_loader;args;batch_size')
+        CustomArgs(['--bs', '--batch_size'], type=int, target='data_loader;args;batch_size'),
     ]
     config = ConfigParser.from_args(args, options)
     main(config)

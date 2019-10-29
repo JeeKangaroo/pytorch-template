@@ -65,3 +65,8 @@ def flatten(d, parent_key='', sep='_'):
         else:
             items.append((new_key, v))
     return dict(items)
+
+
+def get_lr(optimizer):
+    for param_group in optimizer.param_groups:
+        return param_group['lr']

@@ -1,13 +1,19 @@
 {
     "name": "Mnist_LeNet",
     "n_gpu": 1,
-    "wandb": "Mnist",
-    "debug": true,
+    "debug": false,
+
+    "wandb": {
+        "project": "Mnist",
+        "entity" : "aicomtrue",
+        "id": "run-1"
+    },
 
     "arch": {
         "type": "ex_model",
         "args": {}
     },
+
     "data_loader": {
         "type": "MnistDataLoader",
         "args":{
@@ -18,6 +24,7 @@
             "num_workers": 2
         }
     },
+
     "optimizer": {
         "type": "Adam",
         "args":{
@@ -26,27 +33,29 @@
             "amsgrad": true
         }
     },
+
     "loss": "nll_loss",
+
     "metrics": [
         "accuracy", "top_k_acc"
     ],
+
     "lr_scheduler": {
         "type": "StepLR",
         "args": {
-            "step_size": 50,
+            "step_size": 8,
             "gamma": 0.1
         }
     },
+
     "trainer": {
-        "epochs": 100,
+        "epochs": 5,
 
         "save_dir": "saved/",
         "save_period": 1,
         "verbosity": 2,
         
         "monitor": "min val_loss",
-        "early_stop": 10,
-
-        "tensorboard": true
+        "early_stop": 10
     }
 }

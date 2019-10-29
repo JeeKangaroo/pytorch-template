@@ -2,7 +2,7 @@ import numpy as np
 import torch
 import wandb
 from base import BaseTrainer
-from utils import inf_loop, MetricTracker
+from utils import inf_loop, MetricTracker, get_lr
 
 
 class Trainer(BaseTrainer):
@@ -25,6 +25,7 @@ class Trainer(BaseTrainer):
         self.do_validation = self.valid_data_loader is not None
         self.lr_scheduler = lr_scheduler
         self.log_step = int(np.sqrt(data_loader.batch_size))
+        self.init_lr = config['optimizer']['args']['lr']
 
         self.train_metrics = MetricTracker('loss', *[m.__name__ for m in self.metric_ftns])
         self.valid_metrics = MetricTracker('loss', *[m.__name__ for m in self.metric_ftns])
@@ -40,6 +41,14 @@ class Trainer(BaseTrainer):
         self.train_metrics.reset()
         for batch_idx, (data, target) in enumerate(self.data_loader):
             data, target = data.to(self.device), target.to(self.device)
+
+            # Linear Learning Rate Warm-up
+            warm_up = 5
+            full_batch_idx = ((epoch-1)*len(self.data_loader) + batch_idx)
+            if epoch - 1 < warm_up:
+                for params in self.optimizer.param_groups:
+                    params['lr'] = self.init_lr/(warm_up*len(self.data_loader)) * full_batch_idx
+            lr = get_lr(self.optimizer)
 
             # -------- TRAINING LOOP --------
             self.optimizer.zero_grad()
@@ -69,6 +78,8 @@ class Trainer(BaseTrainer):
 
         if self.lr_scheduler is not None:
             self.lr_scheduler.step()
+
+        log.update({'lr': lr})
 
         # Add log to WandB
         if not self.config['debug']:
