@@ -26,7 +26,7 @@ def main(config):
     if config.resume is not None:
         resume = True
 
-    if not config['debug']:
+    if config['track_experiment']:
         # Send Config to WandB
         wandb.init(config=flatten(to_dict(config.config)), **flatten(config['wandb']), resume=resume)
 
@@ -57,7 +57,7 @@ def main(config):
 
     lr_scheduler = config.init_obj('lr_scheduler', torch.optim.lr_scheduler, optimizer)
 
-    if not config['debug']:
+    if config['track_experiment']:
         # Send model to WandB
         wandb.watch(model)
 

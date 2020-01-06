@@ -26,7 +26,10 @@ class Trainer(BaseTrainer):
         self.lr_scheduler = lr_scheduler
         self.log_step = int(np.sqrt(data_loader.batch_size))
         self.init_lr = config['optimizer']['args']['lr']
-        self.warm_up = config['trainer']['warm_up']
+        if 'warm_up' in config['trainer']:
+            self.warm_up = config['trainer']['warm_up']
+        else:
+            self.warm_up = 0
 
         self.train_metrics = MetricTracker('loss', *[m.__name__ for m in self.metric_ftns])
         self.valid_metrics = MetricTracker('loss', *[m.__name__ for m in self.metric_ftns])
@@ -63,10 +66,12 @@ class Trainer(BaseTrainer):
                 self.train_metrics.update(met.__name__, met(output, target))
 
             if batch_idx % self.log_step == 0:
-                self.logger.debug('Train Epoch: {} {} Loss: {:.6f}'.format(
+                self.logger.debug('Train Epoch: {} {} Loss: {:.6f},    lr: {}'.format(
                     epoch,
                     self._progress(batch_idx),
-                    loss.item()))
+                    loss.item(),
+                    get_lr(self.optimizer)
+                ))
 
             if batch_idx == self.len_epoch:
                 break
@@ -82,7 +87,7 @@ class Trainer(BaseTrainer):
         log.update({'lr': lr})
 
         # Add log to WandB
-        if not self.config['debug']:
+        if self.config['track_experiment']:
             wandb.log(log)
 
         return log
