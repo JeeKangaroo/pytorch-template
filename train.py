@@ -54,7 +54,6 @@ def main(config):
         module = config['optimizer']['module']
     optimizer = config.init_obj('optimizer', module, trainable_params)
 
-
     lr_scheduler = config.init_obj('lr_scheduler', torch.optim.lr_scheduler, optimizer)
 
     if config['track_experiment']:
@@ -86,5 +85,5 @@ if __name__ == '__main__':
         CustomArgs(['--lr', '--learning_rate'], type=float, target='optimizer;args;lr'),
         CustomArgs(['--bs', '--batch_size'], type=int, target='data_loader;args;batch_size'),
     ]
-    config = ConfigParser.from_args(args, options)
-    main(config)
+    cfg = ConfigParser.from_args(args, options)
+    main(cfg)
