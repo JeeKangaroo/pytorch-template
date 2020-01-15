@@ -7,7 +7,7 @@ class BaseTrainer:
     """
     Base class for all trainers
     """
-    def __init__(self, model, criterion, metric_ftns, optimizer, config):
+    def __init__(self, model, criterion, metric_ftns, optimizer, lr_scheduler, config):
         self.config = config
         self.logger = config.get_logger('trainer', config['trainer']['verbosity'])
 
@@ -20,6 +20,7 @@ class BaseTrainer:
         self.criterion = criterion
         self.metric_ftns = metric_ftns
         self.optimizer = optimizer
+        self.lr_scheduler = lr_scheduler
 
         cfg_trainer = config['trainer']
         self.epochs = cfg_trainer['epochs']
@@ -128,6 +129,7 @@ class BaseTrainer:
             'epoch': epoch,
             'state_dict': self.model.state_dict(),
             'optimizer': self.optimizer.state_dict(),
+            'lr_scheduler': self.lr_scheduler.state_dict(),
             'monitor_best': self.mnt_best,
             'config': self.config
         }
@@ -163,5 +165,13 @@ class BaseTrainer:
                                 "Optimizer parameters not being resumed.")
         else:
             self.optimizer.load_state_dict(checkpoint['optimizer'])
+
+        # load lr scheduler state from checkpoint only when scheduler type is not changed.
+        if checkpoint['config']['lr_scheduler']['type'] != self.config['lr_scheduler']['type']:
+            self.logger.warning(
+                "Warning: LR Scheduler type given in config file is different from that of checkpoint. "
+                "LR Scheduler parameters not being resumed.")
+        else:
+            self.lr_scheduler.load_state_dict(checkpoint['lr_scheduler'])
 
         self.logger.info("Checkpoint loaded. Resume training from epoch {}".format(self.start_epoch))
