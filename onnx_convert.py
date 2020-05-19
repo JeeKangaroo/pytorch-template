@@ -7,8 +7,6 @@ import onnx
 import onnxruntime
 
 
-# TODO : What to do about Dynamic Axes in export
-
 # Command line argument parser
 parser = argparse.ArgumentParser(description="ONNX Converter")
 parser.add_argument('-m', '--model', help='Model Class Name', required=True)
@@ -59,15 +57,19 @@ torch.onnx.export(model,                                    # model to export
                   x,                                        # Dummy Input
                   args.name,                                # Where to Save Model
                   export_params=True,                       # Store trained parameter weights
-                  do_constant_folding=True,                 # Optimization
+                  do_constant_folding=True,                 # Optimization\
+                  opset_version=11,
+                  keep_initializers_as_inputs=True,
                   input_names=['input'],
-                  output_names=['output'])
+                  output_names=['output'],
+                  dynamic_axes={'input': {2: 'height', 3: 'width'}, 'output': {2: 'height', 3: 'width'}}
+                  )
 
 print("Exported model to ONNX file")
 print("Checking Model Validity...")
 # Try loading exported model in onnx and check validity
 onnx_model = onnx.load(args.name)
-# onnx.checker.check_model(onnx_model)
+onnx.checker.check_model(onnx_model)
 print("Done!")
 
 print("Testing Output Validity...")
